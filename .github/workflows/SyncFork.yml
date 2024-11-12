@@ -1,34 +1,17 @@
-name: Upstream Sync
-
-permissions:
-    contents: write
+# .github/workflows/sync.yml
+name: Sync Fork
 
 on:
-    schedule:
-        - cron: "0 0 * * *"
-    workflow_dispatch:
-
+  push: # push 时触发, 主要是为了测试配置有没有问题
+  schedule:
+    - cron: '0 * * * *' # 每小时 0分触发, 对于一些更新不那么频繁的项目可以设置为每天一次, 低碳一点
 jobs:
-    sync_with_upstream:
-        name: Sync with Upstream
-        runs-on: ubuntu-latest
-        if: ${{ github.event.repository.fork }}
-
-        steps:
-            - name: Checkout target repo
-              uses: actions/checkout@v3
-
-            - name: Sync Upstream
-              uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
-              with:
-                  target_repo_token: ${{ secrets.TOKEN }}
-                  upstream_sync_repo: blinko-space/blinko
-                  upstream_sync_branch: main
-                  target_sync_branch: main
-                  test_mode: false
-
-            - name: Check for Failure
-              if: failure()
-              run: |
-                  echo "[Error] Due to a change in the workflow file of the upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork."
-                  exit 1
+  repo-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: TG908/fork-sync@v1.1
+        with:
+          github_token: ${{ secrets.TOKEN }} # 这个 token action 会默认配置, 这里只需这样写就行
+          owner: blinko-space # fork 上游项目 owner
+          head: main # fork 上游项目需要同步的分支
+          base: main # 需要同步到本项目的目标分支
