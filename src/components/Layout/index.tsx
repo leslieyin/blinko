@@ -48,6 +48,7 @@ export const CommonLayout = observer(({
   useEffect(() => {
     setClient(true)
   }, [])
+
   useEffect(() => {
     if (isPc) setisOpen(false)
   }, [isPc])
@@ -60,18 +61,13 @@ export const CommonLayout = observer(({
 
   const SideBarContent = (
     <div className="flex h-full w-[288px] flex-1 flex-col p-4 relative bg-background">
-      <div className="absolute  inset-0 z-[-1] h-[250px] w-[250px] overflow-hidden blur-3xl ">
-        <div className="w-full h-[100%] bg-[#ffc65c] opacity-20"
-          style={{ "clipPath": "circle(35% at 50% 50%)" }} />
-      </div>
-
-      <div className="flex items-center gap-2 px-2 select-none w-full">
+      <div className="flex items-center gap-2 px-2 select-none w-full ">
         {
           theme == 'dark' ? <Image src="/logo-dark.svg" width={100} /> : <Image src="/logo.svg" width={100} />
         }
         <BlinkoNewVersion />
       </div>
-      <ScrollShadow className="-mr-[16px] mt-[-5px] h-full max-h-full pr-6">
+      <ScrollShadow className="-mr-[16px] mt-[-5px] h-full max-h-full pr-6 ">
         <div>
           <div className="flex flex-col gap-1 mt-4 font-semibold">
             {
@@ -96,6 +92,10 @@ export const CommonLayout = observer(({
           </div>
         </div>
       </ScrollShadow>
+      <div className="absolute inset-0 h-[250px] w-[250px] overflow-hidden blur-3xl z-[0] pointer-events-none">
+        <div className="w-full h-[100%] bg-[#ffc65c] opacity-20"
+          style={{ "clipPath": "circle(35% at 50% 50%)" }} />
+      </div>
     </div>
   );
 
@@ -104,11 +104,12 @@ export const CommonLayout = observer(({
       {
         blinkoStore.showAi && <BlinkoAi />
       }
-      <Menu disableAutoFocus onClose={()=>setisOpen(false)} onOpen={setisOpen} isOpen={isOpen} pageWrapId={'page-wrap'} outerContainerId={'outer-container'}>
+      <Menu disableAutoFocus onClose={() => setisOpen(false)} onOpen={setisOpen} isOpen={isOpen} pageWrapId={'page-wrap'} outerContainerId={'outer-container'}>
         {SideBarContent}
       </Menu>
       {isPc && SideBarContent}
-      <main id="page-wrap" className="flex w-full flex-col gap-y-1 bg-sencondbackground sm:max-w-[calc(100%_-_250px)]">
+      {/* sm:max-w-[calc(100%_-_250px)] */}
+      <main id="page-wrap" className={`flex w-full flex-col gap-y-1 bg-sencondbackground ${isPc ? 'max-w-[calc(100%_-_250px)]' : ''}`}>
         {/* nav bar  */}
         <header className="relative flex h-16 min-h-16 items-center justify-between gap-2 rounded-medium px-2 md:px:4 pt-2 pb-2">
           <div className="hidden md:block absolute bottom-[20%] right-[5%] z-[0] h-[350px] w-[350px] overflow-hidden blur-3xl ">
