@@ -14,6 +14,8 @@ import { RootStore } from '@/store';
 import { StorageState } from '@/store/standard/StorageState';
 import { Icon } from '@iconify/react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 const highlightTags = (text) => {
   if (!text) return text
@@ -58,37 +60,10 @@ const LinkPreview = ({ href }) => {
   const store = RootStore.Local(() => ({
     previewData: new StorageState<LinkInfo | null>({ key: href, default: null })
   }))
+
   try {
     if (typeof href == 'object') {
-      return <div className='react-image'>
-        <PhotoProvider >
-          <PhotoView src={href?.props?.src}>
-            <Image src={href?.props?.src} />
-          </PhotoView>
-        </PhotoProvider>
-      </div>
-    }
-    if (href?.startsWith('<img')) {
-      const src = href.match(/src="([^"]+)"/)?.[1]
-      const regex = /height="(\d+)"\s+width="(\d+)"/;
-      const matches = href.match(regex);
-      console.log(matches)
-      let style = {}
-      if (matches) {
-        let height = matches[1];
-        let width = matches[2];
-        style = { height: height + 'px', width: width + 'px' }
-        console.log(`Height: ${height}, Width: ${width}`);
-      } else {
-        console.log("No match found.");
-      }
-      return <div className='text-image'>
-        <PhotoProvider >
-          <PhotoView src={src}>
-            <Image src={src}  {...style} />
-          </PhotoView>
-        </PhotoProvider>
-      </div>
+      return <ImageWrapper src={href?.props?.src} width={href?.props?.width} height={href?.props?.height} />
     }
   } catch (error) {
     console.log(error)
@@ -111,7 +86,7 @@ const LinkPreview = ({ href }) => {
   }, [href]);
 
   return (
-    <div className="link-preview">
+    <>
       <a href={href} target="_blank" rel="noopener noreferrer">{href}</a>
       {store.previewData.value && <Card className='p-2 my-1 bg-sencondbackground rounded-xl select-none ' radius='none' shadow='none'>
         <div className='flex items-center gap-2 w-full'>
@@ -120,9 +95,21 @@ const LinkPreview = ({ href }) => {
         </div>
         <div className='text-desc truncate text-xs'>{store.previewData.value?.description}</div>
       </Card>}
-    </div>
+    </>
   );
 };
+
+const ImageWrapper = ({ src, width, height }) => {
+  const props = { width, height }
+  return (
+    <PhotoProvider>
+      <PhotoView src={src}>
+        <Image src={src} {...props} />
+      </PhotoView>
+    </PhotoProvider>
+  );
+};
+
 
 
 export const MarkdownRender = observer(({ content = '', onChange }: { content?: string, onChange?: (newContent: string) => void }) => {
@@ -150,6 +137,7 @@ export const MarkdownRender = observer(({ content = '', onChange }: { content?: 
       <div ref={contentRef} data-markdown-theme={theme} className={`markdown-body content ${isExpanded ? "expanded" : "collapsed"}`}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, rehypeSanitize]} //xss
           components={{
             p: ({ node, children }) => <p>{highlightTags(children)}</p>,
             code: Code,
@@ -180,6 +168,7 @@ export const MarkdownRender = observer(({ content = '', onChange }: { content?: 
               }
               return <li >{children}</li>
             },
+            img: ImageWrapper
           }}
         >
           {content}
