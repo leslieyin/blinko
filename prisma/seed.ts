@@ -1,6 +1,32 @@
 import { PrismaClient } from '@prisma/client'
 import fs from 'fs/promises'
 import { ncp } from 'ncp'
+import crypto from 'crypto'
+
+export async function hashPassword(password: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    crypto.pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {
+      if (err) reject(err);
+      resolve('pbkdf2:' + salt + ':' + derivedKey.toString('hex'));
+    });
+  });
+}
+
+export async function verifyPassword(inputPassword: string, hashedPassword: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const [prefix, salt, hash] = hashedPassword.split(':');
+    if (prefix !== 'pbkdf2') {
+      return resolve(false);
+    }
+    crypto.pbkdf2(inputPassword, salt!, 1000, 64, 'sha512', (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(derivedKey.toString('hex') === hash);
+    });
+  });
+}
+
+
 const tag = [
   {
     "id": 1,
@@ -223,6 +249,15 @@ async function main() {
       await prisma.accounts.update({ where: { id: account.id }, data: { role: 'superadmin' } })
     }
     await prisma.notes.updateMany({ where: { accountId: null }, data: { accountId: account.id } })
+  }
+
+  //database password hash
+  const accounts = await prisma.accounts.findMany()
+  for (const account of accounts) {
+    const isHash = account.password.startsWith('pbkdf2:')
+    if (!isHash) {
+      await prisma.accounts.update({ where: { id: account.id }, data: { password: await hashPassword(account.password) } })
+    }
   }
 
   try {
