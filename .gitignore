@@ -17,9 +17,8 @@ yarn.lock
 public/robots.txt
 public/sitemap*
 public/assets
-.blinko/faiss/*
-.blinko/pgdump/*
-.blinko/files/*
+.blinko/*
 dump.sql
 public/sw*
 public/workbox*.*
+seed.js
